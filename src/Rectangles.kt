@@ -203,10 +203,10 @@ private class RectanglesVisualizer(
             Scanner(FileReader(inputFile)).use { scanner ->
                 val rectanglesCount = scanner.nextInt()
                 for (i in 0 until rectanglesCount) {
-                    val top = scanner.nextInt()
                     val left = scanner.nextInt()
-                    val bottom = scanner.nextInt()
+                    val top = scanner.nextInt()
                     val right = scanner.nextInt()
+                    val bottom = scanner.nextInt()
                     rectangles.add(Rectangle(id, top, left, bottom, right))
                     id++
                 }
