@@ -8,8 +8,10 @@ import kotlin.jvm.Throws
 import kotlin.math.roundToInt
 
 private const val UNIT_DIMENSION = 100f
+private const val PALETTE_COLORS_SIZE = 8
 
 private data class Rectangle(
+    val id: Int,
     val top: Int,
     val left: Int,
     val bottom: Int,
@@ -85,7 +87,9 @@ private class RectanglesVisualizer(
             }
         }
 
-        val cells = BooleanArray(rows.size * columns.size)
+        val cells = IntArray(rows.size * columns.size) {
+            -1
+        }
         val sortedByTop = rectangles.sortedBy { it.top }
         val sortedByLeft = rectangles.sortedBy { it.left }
 
@@ -109,7 +113,10 @@ private class RectanglesVisualizer(
                     leftIndex++
                 }
 
-                cells[i * columns.size + j] = rectanglesInCurrentCell.isNotEmpty()
+                val currentRectangle = rectanglesInCurrentCell.firstOrNull()
+                if (currentRectangle != null) {
+                    cells[i * columns.size + j] = currentRectangle.id % PALETTE_COLORS_SIZE
+                }
 
                 val rectanglesInCurrentCellIterator = rectanglesInCurrentCell.iterator()
                 while (rectanglesInCurrentCellIterator.hasNext()) {
@@ -136,7 +143,7 @@ private class RectanglesVisualizer(
 
     @Throws(IOException::class)
     private fun writeToFile(
-        outputFile: String, rows: List<Row>, columns: List<Column>, scale: Float, isFilled: (Int, Int) -> Boolean
+        outputFile: String, rows: List<Row>, columns: List<Column>, scale: Float, fillColorIndex: (Int, Int) -> Int
     ) {
         @Language("html")
         val header = """
@@ -145,7 +152,14 @@ private class RectanglesVisualizer(
                 <style>
                     tr { border: 1px solid #000; }
                     td { border: 1px solid #000; }
-                    td.filled { background-color: #ccc; }
+                    td.filled0 { background-color: #f5d7b0; }
+                    td.filled1 { background-color: #d15b56; }
+                    td.filled2 { background-color: #007896; }
+                    td.filled3 { background-color: #3e909d; }
+                    td.filled4 { background-color: #c43138; }
+                    td.filled5 { background-color: #c7522a; }
+                    td.filled6 { background-color: #004e61; }
+                    td.filled7 { background-color: #7ba8a3; }
                 </style>
             </head>
             <body>
@@ -169,7 +183,8 @@ private class RectanglesVisualizer(
                 for (j in columns.indices) {
                     val column = columns[j]
                     val widthPx = (column.width * scale).roundToInt()
-                    val cssClass = if (isFilled(i, j)) """ class="filled" """ else ""
+                    val colorIndex = fillColorIndex(i, j)
+                    val cssClass = if (colorIndex >= 0) """ class="filled${colorIndex}" """ else ""
                     out.println("""<td style="width: ${widthPx}px" $cssClass>&nbsp;</td>""")
                 }
                 out.println("</tr>")
@@ -184,10 +199,16 @@ private class RectanglesVisualizer(
         @Throws(IOException::class)
         fun loadFromFile(inputFile: String): RectanglesVisualizer {
             val rectangles = ArrayList<Rectangle>()
+            var id = 0
             Scanner(FileReader(inputFile)).use { scanner ->
                 val rectanglesCount = scanner.nextInt()
                 for (i in 0 until rectanglesCount) {
-                    rectangles.add(Rectangle(scanner.nextInt(), scanner.nextInt(), scanner.nextInt(), scanner.nextInt()))
+                    val top = scanner.nextInt()
+                    val left = scanner.nextInt()
+                    val bottom = scanner.nextInt()
+                    val right = scanner.nextInt()
+                    rectangles.add(Rectangle(id, top, left, bottom, right))
+                    id++
                 }
             }
             return RectanglesVisualizer(rectangles)
